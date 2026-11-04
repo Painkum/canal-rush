@@ -1,0 +1,6 @@
+{
+  "name": "venice-boat",
+  "private": true,
+  "type": "module",
+  "description": "破晓时分的威尼斯运河实时 3D 体验，含接送乘客与竞渡两个单机模式。纯静态站点。"
+}

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Canal Rush — Kayak Racing at Dawn</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;800&family=Manrope:wght@500;600;700;800&display=swap">
+<style>
+  html, body { margin: 0; height: 100%; background: #0b2128; overflow: hidden; }
+  #view { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+
+  /* ---- loader: emblem + wordmark, a rising-water progress pill, rotating tips ---- */
+  #loading {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    background:
+      radial-gradient(ellipse 70% 50% at 50% 100%, rgba(255, 122, 89, .35), transparent 70%),
+      linear-gradient(180deg, #0b2128 0%, #0f3039 60%, #164550 100%);
+    font-family: "Manrope", system-ui, sans-serif;
+    color: #f6efe4;
+    overflow: hidden;
+    transition: opacity .7s ease;
+  }
+  #loading.done { opacity: 0; pointer-events: none; }
+  #loading .sky { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 30vh; }
+  #loading .inner { position: relative; z-index: 2; width: min(560px, 86vw); text-align: center; margin-top: -10vh; }
+  #loading .mark { width: clamp(76px, 9vw, 104px); height: auto; animation: bob 3s ease-in-out infinite; }
+  @keyframes bob { 50% { transform: translateY(-6px) rotate(-3deg); } }
+  #loading .word { margin-top: 18px; font-family: "Unbounded", sans-serif; font-weight: 800; font-size: clamp(40px, 6.4vw, 72px); letter-spacing: -.01em; line-height: 1; text-transform: uppercase; }
+  #loading .word .w2 { color: #ff7a59; }
+  #loading .sub { margin-top: 10px; font-weight: 600; font-size: 15px; color: rgba(246, 239, 228, .6); }
+  #loading .bar { position: relative; margin: 6vh auto 0; height: 22px; border-radius: 999px; overflow: hidden;
+    background: rgba(246, 239, 228, .1); box-shadow: inset 0 0 0 2px rgba(246, 239, 228, .12); }
+  #loadbar { position: absolute; left: 0; top: 0; bottom: 0; width: 0%; border-radius: 999px;
+    background: linear-gradient(90deg, #3fd0c9, #7fe3c4 60%, #ffd3a1);
+    transition: width .3s ease; overflow: hidden; }
+  #loadbar::after { content: ''; position: absolute; inset: 0;
+    background: repeating-linear-gradient(110deg, rgba(255,255,255,.28) 0 10px, transparent 10px 22px);
+    animation: flow 1s linear infinite; }
+  @keyframes flow { to { background-position: 44px 0; } }
+  #loading .row { display: flex; justify-content: space-between; margin-top: 12px; font-weight: 700; font-size: 14px; }
+  #loadtext { color: rgba(246, 239, 228, .7); }
+  #loadpct { font-family: "Unbounded", sans-serif; font-weight: 700; color: #3fd0c9; }
+  #loading .tip { display: inline-flex; align-items: center; gap: 10px; margin-top: 5vh; padding: 10px 18px; border-radius: 999px;
+    background: rgba(246, 239, 228, .08); font-weight: 600; font-size: 14px; color: rgba(246, 239, 228, .85); }
+  #loading .tip b { width: 8px; height: 8px; border-radius: 50%; background: #ff7a59; flex: none; box-shadow: 0 0 0 4px rgba(255,122,89,.25); }
+  #tiptext { transition: opacity .35s ease; }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+}}
+</script>
+<link rel="stylesheet" href="src/ui/styles.css">
+</head>
+<body>
+<canvas id="view"></canvas>
+<div id="ui">
+  <div id="scrim"></div>
+  <div id="hud"></div>
+  <div id="notice"></div>
+</div>
+<div id="loading">
+  <svg class="sky" viewBox="0 0 1600 300" preserveAspectRatio="none" aria-hidden="true">
+    <path fill="#12363f" d="M0 130 L90 130 L90 95 L150 95 L150 120 L240 120 L240 80 L262 58 L284 80 L284 120 L380 120 L380 104 L470 104 L470 130 L560 130 L560 52 L575 52 L575 26 L588 8 L601 26 L601 52 L616 52 L616 130 L720 130 L720 100 L820 100 L820 118 L930 118 L930 86 L1010 86 L1010 122 L1120 122 L1120 74 L1146 54 L1172 74 L1172 122 L1290 122 L1290 102 L1400 102 L1400 126 L1500 126 L1500 92 L1600 92 L1600 300 L0 300 Z"/>
+    <path fill="#174a54" d="M0 200 C120 176 220 224 360 198 C500 172 600 226 760 200 C920 174 1020 222 1180 196 C1330 172 1450 216 1600 194 L1600 300 L0 300 Z"/>
+    <path fill="#1d5c66" d="M0 250 C150 232 260 268 420 250 C580 232 690 270 860 251 C1030 232 1140 266 1300 248 C1420 236 1520 256 1600 246 L1600 300 L0 300 Z"/>
+  </svg>
+  <div class="inner">
+    <svg class="mark" viewBox="0 0 64 64" aria-hidden="true">
+      <circle cx="32" cy="32" r="30" fill="#ff7a59"/>
+      <circle cx="32" cy="32" r="30" fill="none" stroke="#f6efe4" stroke-width="2.5" opacity=".9"/>
+      <circle cx="44" cy="20" r="6" fill="#ffd3a1"/>
+      <path d="M10 36 H54 V40 H48 C47 31 41 26 32 26 C23 26 17 31 16 40 H10 Z" fill="#f6efe4"/>
+      <path d="M12 46 q5 -3 10 0 t10 0 t10 0 t10 0" fill="none" stroke="#0e2a31" stroke-width="2.6" stroke-linecap="round"/>
+      <path d="M17 52 q5 -3 10 0 t10 0 t10 0" fill="none" stroke="#0e2a31" stroke-width="2.6" stroke-linecap="round" opacity=".6"/>
+    </svg>
+    <div class="word"><span class="w1">Canal</span> <span class="w2">Rush</span></div>
+    <div class="sub">Kayak racing on the canals of Venice</div>
+    <div class="bar"><div id="loadbar"></div></div>
+    <div class="row"><span id="loadtext">Filling the canals…</span><span id="loadpct">0%</span></div>
+    <div class="tip"><b></b><span id="tiptext">Grab the ? boxes in the race — press E to use what's inside.</span></div>
+  </div>
+</div>
+<script>
+  window.__errors = [];
+  addEventListener('error', e => window.__errors.push(String(e.message)));
+  addEventListener('unhandledrejection', e => window.__errors.push(String(e.reason)));
+  (function () {
+    const tips = [
+      "Grab the ? boxes in the race — press E to use what's inside.",
+      'Rapids sweep you downstream. Aim for the gap between the rocks.',
+      'A Stable Hull from the shop keeps you steady in whitewater.',
+      'Dock gently — under 1 m/s, level and head-on — or your fare walks.',
+      'Press Space beside a wall to push off with your paddle.',
+      'Coins come from every fare and every podium. Spend them in the shop.',
+    ];
+    let i = 0;
+    const el = document.getElementById('tiptext');
+    const timer = setInterval(() => {
+      if (document.getElementById('loading').classList.contains('done')) return clearInterval(timer);
+      el.style.opacity = 0;
+      setTimeout(() => { i = (i + 1) % tips.length; el.textContent = tips[i]; el.style.opacity = 1; }, 350);
+    }, 3200);
+  })();
+</script>
+<script type="module">
+  import { boot } from './src/main.js';
+  boot().catch(e => { window.__errors.push('boot: ' + e.message); console.error(e); });
+</script>
+</body>
+</html>
