@@ -1,5 +1,7 @@
 # Canal Rush — Kayak Racing at Dawn
 
+**▶ Play it in your browser: https://painkum.github.io/canal-rush/**
+
 A real-time 3D dawn-on-the-canals Venice experience in the browser, with two
 single-player games on top: a passenger ferry route, and a point-to-point
 regatta against three local AI boatmen. Fully static — no server, no network
